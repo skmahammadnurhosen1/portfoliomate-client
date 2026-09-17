@@ -204,6 +204,25 @@ export const cvApi = {
     });
     return res.data;
   },
+
+  getDownloadUrl: () => `${API_BASE}/cv/download`,
+
+  downloadPdf: async (fallbackFileName = 'Nur_Hosen_CV.pdf') => {
+    const downloadUrl = `${API_BASE}/cv/download`;
+    const response = await fetch(downloadUrl);
+    if (!response.ok) {
+      throw new Error('CV PDF is not available for download.');
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fallbackFileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+  },
 };
 
 // Contact & Inquiries API

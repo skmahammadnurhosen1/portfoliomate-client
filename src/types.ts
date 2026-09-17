@@ -18,7 +18,13 @@ export interface Project {
   duration?: string;
   rate?: string;
   avatar?: string;
+  clientName?: string;
+  deliverables?: string;
+  designTools?: string[];
+  behanceUrl?: string;
+  dimensions?: string;
   hidden?: boolean;
+  order?: number;
 }
 
 export interface SocialLinkItem {

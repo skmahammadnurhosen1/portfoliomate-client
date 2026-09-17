@@ -16,6 +16,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { cvApi, getAssetUrl } from '../api/client';
 
 interface DownloadCVModalProps {
   isOpen: boolean;
@@ -48,17 +49,30 @@ export const DownloadCVModal: React.FC<DownloadCVModalProps> = ({ isOpen, onClos
     }
   };
 
-  const handleDownloadCV = () => {
-    // If the admin has uploaded a custom PDF, download it directly!
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadCV = async () => {
+    // If the admin has uploaded a custom PDF, download it reliably via blob fetch
     if (cvData.customPdfUrl) {
-      const link = document.createElement('a');
-      link.href = cvData.customPdfUrl;
-      link.download = cvData.customPdfFileName || `${displayName.replace(/\s+/g, '_')}_CV.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3000);
+      setIsDownloading(true);
+      try {
+        await cvApi.downloadPdf(cvData.customPdfFileName || `${displayName.replace(/\s+/g, '_')}_CV.pdf`);
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 3000);
+      } catch (err) {
+        console.warn('[CV Modal] Direct blob download fallback to asset link:', err);
+        const link = document.createElement('a');
+        link.href = getAssetUrl(cvData.customPdfUrl);
+        link.download = cvData.customPdfFileName || `${displayName.replace(/\s+/g, '_')}_CV.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 3000);
+      } finally {
+        setIsDownloading(false);
+      }
       return;
     }
 
@@ -416,9 +430,15 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
 
             <button
               onClick={handleDownloadCV}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-[#d6ad60] text-neutral-950 hover:bg-[#c5a059] transition-all cursor-pointer shadow-md hover:scale-[1.02] active:scale-[0.98]"
+              disabled={isDownloading}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-[#d6ad60] text-neutral-950 hover:bg-[#c5a059] transition-all cursor-pointer shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {downloadSuccess ? (
+              {isDownloading ? (
+                <>
+                  <Download className="w-4 h-4 animate-bounce" />
+                  <span>Downloading PDF...</span>
+                </>
+              ) : downloadSuccess ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-950" />
                   <span>Downloaded Successfully!</span>

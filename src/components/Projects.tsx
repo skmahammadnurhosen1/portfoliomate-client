@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
+import { getAssetUrl } from '../api/client';
 import { 
   Bookmark, 
   ChevronDown, 
   Layers,
   Palette,
   Globe,
-  ArrowUpRight
+  ArrowUpRight,
+  ExternalLink,
+  Github
 } from 'lucide-react';
 
 interface ProjectsProps {
@@ -122,7 +125,7 @@ export const Projects: React.FC<ProjectsProps> = ({ onSelectProject }) => {
                 {/* 1. Cover Image: Fluid responsive aspect ratio (no overflow/overlapping) */}
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                   <img
-                    src={project.image}
+                    src={getAssetUrl(project.image)}
                     alt={project.title}
                     loading="lazy"
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -170,27 +173,71 @@ export const Projects: React.FC<ProjectsProps> = ({ onSelectProject }) => {
                     </h3>
 
                     {/* Subtitle */}
-                    <p className="font-sans text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed font-light">
-                      {project.subtitle}
-                    </p>
+                    {project.subtitle && (
+                      <p className="font-sans text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed font-light">
+                        {project.subtitle}
+                      </p>
+                    )}
 
-                    {/* Subtle Tech Stack Preview (2-3 items max) */}
-                    <div className="flex flex-wrap gap-1.5 mt-3.5">
-                      {project.techStack.slice(0, 3).map((tech, idx) => (
-                        <span
-                          key={idx}
-                          className="text-[10px] sm:text-[11px] font-outfit font-medium px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800/60 text-neutral-600 dark:text-neutral-400 border border-neutral-200/50 dark:border-neutral-700/50"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
+                    {/* Category-Specific Metadata */}
+                    {isGraphic ? (
+                      <div className="mt-3 space-y-2">
+                        {project.clientName && (
+                          <div className="text-[11px] font-outfit text-neutral-600 dark:text-neutral-300 flex items-center gap-1.5">
+                            <span className="text-neutral-400 uppercase tracking-wider text-[10px]">Client:</span>
+                            <span className="font-semibold text-[#c5a059] dark:text-[#d6ad60]">{project.clientName}</span>
+                          </div>
+                        )}
+                        {project.deliverables && (
+                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-1 font-light">
+                            <span className="text-neutral-400 uppercase tracking-wider text-[10px] font-semibold mr-1">Scope:</span>
+                            {project.deliverables}
+                          </p>
+                        )}
+                        {/* Design Tools Tags */}
+                        {((project.designTools && project.designTools.length > 0) ? project.designTools : project.techStack).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {((project.designTools && project.designTools.length > 0) ? project.designTools : project.techStack).slice(0, 3).map((tool, idx) => (
+                              <span
+                                key={idx}
+                                className="text-[10px] sm:text-[11px] font-outfit font-medium px-2 py-0.5 rounded-md bg-amber-500/10 dark:bg-amber-500/15 text-amber-700 dark:text-[#d6ad60] border border-amber-500/20"
+                              >
+                                {tool}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-3 space-y-2">
+                        {/* Web Tech Stack Tags */}
+                        {project.techStack && project.techStack.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {project.techStack.slice(0, 3).map((tech, idx) => (
+                              <span
+                                key={idx}
+                                className="text-[10px] sm:text-[11px] font-outfit font-medium px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800/60 text-neutral-600 dark:text-neutral-400 border border-neutral-200/50 dark:border-neutral-700/50"
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {/* Live / Github link hint */}
+                        {(project.demoUrl || project.githubUrl) && (
+                          <div className="flex items-center gap-2 text-[10px] text-neutral-400 pt-0.5">
+                            {project.demoUrl && <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">&bull; Live Demo</span>}
+                            {project.githubUrl && <span className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">&bull; Code Repo</span>}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* 3. Minimalist Bottom Action Bar */}
                   <div className="pt-4 mt-5 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between">
                     <span className="text-[11px] font-outfit text-neutral-400 dark:text-neutral-500">
-                      Explore Case Study
+                      {isGraphic ? 'Explore Design Specs' : 'Explore Web Project'}
                     </span>
 
                     <div className="inline-flex items-center gap-1 text-xs font-outfit font-bold text-neutral-900 dark:text-white group-hover:text-[#d6ad60] dark:group-hover:text-[#d6ad60] transition-colors">

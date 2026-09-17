@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Project } from '../types';
 import { usePortfolio } from '../context/PortfolioContext';
+import { getAssetUrl } from '../api/client';
 
 interface ProjectDetailsPageProps {
   project: Project;
@@ -209,46 +210,52 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
             <div className="min-w-0">
               <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">Role</span>
               <span className="text-xs sm:text-sm font-outfit font-bold text-neutral-900 dark:text-neutral-100 truncate block">
-                {project.role || (isGraphic ? 'Lead Designer' : 'Frontend Engineer')}
+                {project.role || (isGraphic ? 'Lead Graphic Designer' : 'Frontend Engineer')}
               </span>
             </div>
           </div>
 
-          {/* Spec 2: Duration */}
+          {/* Spec 2: Client (Graphic) vs Timeline (Web) */}
           <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-900/40">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[#d6ad60] flex items-center justify-center flex-shrink-0">
-              <Clock className="w-4 h-4" />
+              {isGraphic ? <Sparkles className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
             </div>
             <div className="min-w-0">
-              <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">Timeline</span>
+              <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">
+                {isGraphic ? 'Client' : 'Timeline'}
+              </span>
               <span className="text-xs sm:text-sm font-outfit font-bold text-neutral-900 dark:text-neutral-100 truncate block">
-                {project.duration || '7 Days Sprint'}
+                {isGraphic ? (project.clientName || 'Brand Commission') : (project.duration || '7 Days Sprint')}
               </span>
             </div>
           </div>
 
-          {/* Spec 3: Client Rating */}
+          {/* Spec 3: Resolution (Graphic) vs Rating (Web) */}
           <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-900/40">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[#d6ad60] flex items-center justify-center flex-shrink-0">
-              <Star className="w-4 h-4 fill-[#d6ad60]" />
+              {isGraphic ? <Compass className="w-4 h-4" /> : <Star className="w-4 h-4 fill-[#d6ad60]" />}
             </div>
             <div className="min-w-0">
-              <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">Rating</span>
+              <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">
+                {isGraphic ? 'Specs' : 'Rating'}
+              </span>
               <span className="text-xs sm:text-sm font-outfit font-bold text-neutral-900 dark:text-neutral-100 truncate block">
-                {project.rating || '5.0'} / 5.0 Rating
+                {isGraphic ? (project.dimensions || 'Vector & Print Ready') : (`${project.rating || '5.0'} / 5.0 Rating`)}
               </span>
             </div>
           </div>
 
-          {/* Spec 4: Scope */}
+          {/* Spec 4: Scope (Graphic) vs Engagement (Web) */}
           <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-neutral-50/70 dark:bg-neutral-900/40">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[#d6ad60] flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">Engagement</span>
+              <span className="text-[11px] font-outfit font-semibold uppercase tracking-wider text-neutral-400 block">
+                {isGraphic ? 'Deliverables' : 'Engagement'}
+              </span>
               <span className="text-xs sm:text-sm font-outfit font-bold text-neutral-900 dark:text-neutral-100 truncate block">
-                {project.rate || 'Direct Client Work'}
+                {isGraphic ? (project.deliverables || 'Full Visual Identity') : (project.rate || 'Direct Client Work')}
               </span>
             </div>
           </div>
@@ -276,7 +283,7 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
           {/* Project Image */}
           <div className={`relative w-full ${isImageExpanded ? 'aspect-auto max-h-[85vh]' : 'aspect-[16/9.5] sm:aspect-[16/9]'} overflow-hidden bg-neutral-100 dark:bg-neutral-950 flex items-center justify-center transition-all duration-300`}>
             <img
-              src={project.image}
+              src={getAssetUrl(project.image)}
               alt={project.title}
               className="w-full h-full object-cover object-center group-hover:scale-[1.01] transition-transform duration-500"
               loading="eager"
@@ -285,34 +292,62 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
 
         </div>
 
-        {/* Action Link CTAs Row (Live Demo / Github) */}
-        {(project.demoUrl || project.githubUrl) && (
-          <div className="flex flex-wrap items-center gap-3 mb-12">
-            {project.demoUrl && (
-              <a
-                href={project.demoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-neutral-900 dark:bg-[#f4ece1] text-white dark:text-[#090807] hover:bg-[#d6ad60] dark:hover:bg-[#d6ad60] dark:hover:text-black text-xs sm:text-sm font-outfit font-bold tracking-wide transition-all shadow-sm cursor-pointer"
-              >
-                <span>Launch Live Preview</span>
-                <ExternalLink className="w-4 h-4 stroke-[2.2]" />
-              </a>
-            )}
+        {/* Action Link CTAs Row */}
+        <div className="flex flex-wrap items-center gap-3 mb-12">
+          {isGraphic ? (
+            <>
+              {project.behanceUrl && (
+                <a
+                  href={project.behanceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#0057ff] hover:bg-[#0043c7] text-white text-xs sm:text-sm font-outfit font-bold tracking-wide transition-all shadow-sm cursor-pointer"
+                >
+                  <Palette className="w-4 h-4" />
+                  <span>View on Behance</span>
+                  <ExternalLink className="w-4 h-4 stroke-[2.2]" />
+                </a>
+              )}
+              {project.demoUrl && (
+                <a
+                  href={project.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-neutral-900 dark:bg-[#f4ece1] text-white dark:text-[#090807] hover:bg-[#d6ad60] dark:hover:bg-[#d6ad60] dark:hover:text-black text-xs sm:text-sm font-outfit font-bold tracking-wide transition-all shadow-sm cursor-pointer"
+                >
+                  <span>Interactive Preview</span>
+                  <ExternalLink className="w-4 h-4 stroke-[2.2]" />
+                </a>
+              )}
+            </>
+          ) : (
+            <>
+              {project.demoUrl && (
+                <a
+                  href={project.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-neutral-900 dark:bg-[#f4ece1] text-white dark:text-[#090807] hover:bg-[#d6ad60] dark:hover:bg-[#d6ad60] dark:hover:text-black text-xs sm:text-sm font-outfit font-bold tracking-wide transition-all shadow-sm cursor-pointer"
+                >
+                  <span>Launch Live Preview</span>
+                  <ExternalLink className="w-4 h-4 stroke-[2.2]" />
+                </a>
+              )}
 
-            {project.githubUrl && (
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-[#12100e] text-neutral-800 dark:text-neutral-200 hover:border-[#d6ad60] hover:text-[#d6ad60] text-xs sm:text-sm font-outfit font-semibold transition-all shadow-2xs cursor-pointer"
-              >
-                <Github className="w-4 h-4" />
-                <span>Source Code Repository</span>
-              </a>
-            )}
-          </div>
-        )}
+              {project.githubUrl && (
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-[#12100e] text-neutral-800 dark:text-neutral-200 hover:border-[#d6ad60] hover:text-[#d6ad60] text-xs sm:text-sm font-outfit font-semibold transition-all shadow-2xs cursor-pointer"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>Source Code Repository</span>
+                </a>
+              )}
+            </>
+          )}
+        </div>
 
         {/* 2-Column Clean Content Architecture */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start mb-16">
@@ -423,7 +458,10 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {project.techStack.map((tech) => (
+                {(isGraphic && project.designTools && project.designTools.length > 0
+                  ? project.designTools
+                  : project.techStack
+                ).map((tech) => (
                   <span
                     key={tech}
                     className="font-outfit font-medium text-xs px-3 py-1.5 rounded-xl bg-neutral-100 dark:bg-[#181512] border border-neutral-200 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200 hover:border-[#d6ad60]/50 transition-colors"
@@ -486,7 +524,7 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
           >
             <div className="w-12 h-12 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 flex-shrink-0 border border-neutral-200/60 dark:border-neutral-800">
               <img
-                src={prevProject.image}
+                src={getAssetUrl(prevProject.image)}
                 alt={prevProject.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -527,7 +565,7 @@ export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({
             </div>
             <div className="w-12 h-12 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 flex-shrink-0 border border-neutral-200/60 dark:border-neutral-800">
               <img
-                src={nextProject.image}
+                src={getAssetUrl(nextProject.image)}
                 alt={nextProject.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />

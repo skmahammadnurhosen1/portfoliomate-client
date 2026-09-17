@@ -17,6 +17,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { usePortfolio } from '../../context/PortfolioContext';
+import { cvApi, getAssetUrl } from '../../api/client';
 import { CVHighlightItem, CVExperienceItem, CVEducationItem } from '../../types';
 
 interface CVManagerProps {
@@ -125,18 +126,24 @@ export const CVManager: React.FC<CVManagerProps> = ({ onShowToast, onPreviewCV }
   };
 
   // Test Download uploaded PDF
-  const handleTestDownload = () => {
+  const handleTestDownload = async () => {
     if (!cvData.customPdfUrl) {
       onShowToast('No PDF uploaded yet.');
       return;
     }
-    const link = document.createElement('a');
-    link.href = cvData.customPdfUrl;
-    link.download = cvData.customPdfFileName || 'Resume.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    onShowToast(`Downloading "${cvData.customPdfFileName || 'Resume.pdf'}"...`);
+    try {
+      onShowToast(`Downloading "${cvData.customPdfFileName || 'Resume.pdf'}"...`);
+      await cvApi.downloadPdf(cvData.customPdfFileName || 'Resume.pdf');
+    } catch (err) {
+      console.warn('[CVManager] Blob download failed, trying link fallback:', err);
+      const link = document.createElement('a');
+      link.href = getAssetUrl(cvData.customPdfUrl);
+      link.download = cvData.customPdfFileName || 'Resume.pdf';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   // Save General CV Details

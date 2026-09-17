@@ -42,7 +42,7 @@ import { Project, SocialLinkItem } from '../../types';
 import { CVManager } from './CVManager';
 import { MessagesManager } from './MessagesManager';
 import { DownloadCVModal } from '../DownloadCVModal';
-import { AdminUser, authApi, uploadApi } from '../../api/client';
+import { AdminUser, authApi, uploadApi, getAssetUrl } from '../../api/client';
 
 interface AdminDashboardProps {
   onBackToPortfolio: () => void;
@@ -97,22 +97,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
   const [filterCategory, setFilterCategory] = useState<'all' | 'web-building' | 'graphic-design'>('all');
   const [filterVisibility, setFilterVisibility] = useState<'all' | 'live' | 'hidden'>('all');
 
-  // Project Form State
+  // Project Form State - ALL EMPTY BY DEFAULT
   const [formTitle, setFormTitle] = useState('');
   const [formSubtitle, setFormSubtitle] = useState('');
   const [formCategory, setFormCategory] = useState<'web-building' | 'graphic-design'>('web-building');
-  const [formYear, setFormYear] = useState('2025');
+  const [formYear, setFormYear] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formImage, setFormImage] = useState('');
-  const [formRole, setFormRole] = useState('Frontend Developer & Designer');
-  const [formStatus, setFormStatus] = useState('Client Project (Live)');
-  const [formRating, setFormRating] = useState('5.0');
-  const [formDuration, setFormDuration] = useState('7 days');
-  const [formRate, setFormRate] = useState('$45/hr');
-  const [formTechTags, setFormTechTags] = useState<string[]>(['React', 'Tailwind CSS']);
+  const [formRole, setFormRole] = useState('');
+  const [formStatus, setFormStatus] = useState('');
+  const [formRating, setFormRating] = useState('');
+  const [formDuration, setFormDuration] = useState('');
+  const [formRate, setFormRate] = useState('');
+  const [formTechTags, setFormTechTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [formDemoUrl, setFormDemoUrl] = useState('');
   const [formGithubUrl, setFormGithubUrl] = useState('');
+  // Graphic Design specific form state
+  const [formClientName, setFormClientName] = useState('');
+  const [formDeliverables, setFormDeliverables] = useState('');
+  const [formDesignTools, setFormDesignTools] = useState<string[]>([]);
+  const [designToolInput, setDesignToolInput] = useState('');
+  const [formBehanceUrl, setFormBehanceUrl] = useState('');
+  const [formDimensions, setFormDimensions] = useState('');
   const [formFeatured, setFormFeatured] = useState(false);
 
   // File Upload Ref
@@ -181,46 +188,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
     }, 3500);
   };
 
-  // Open Project Modal for Add
+  // Open Project Modal for Add (Completely empty by default)
   const handleOpenAddProject = () => {
     setEditingProject(null);
     setFormTitle('');
     setFormSubtitle('');
     setFormCategory('web-building');
-    setFormYear(new Date().getFullYear().toString());
+    setFormYear('');
     setFormDescription('');
-    setFormImage('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80');
-    setFormRole('Website Builder & Frontend Dev');
-    setFormStatus('Delivered (Live)');
-    setFormRating('5.0');
-    setFormDuration('10 days');
-    setFormRate('$45/hr');
-    setFormTechTags(['React', 'Tailwind CSS', 'TypeScript']);
+    setFormImage('');
+    setFormRole('');
+    setFormStatus('');
+    setFormRating('');
+    setFormDuration('');
+    setFormRate('');
+    setFormTechTags([]);
     setTagInput('');
-    setFormDemoUrl('https://example.com');
-    setFormGithubUrl('https://github.com');
-    setFormFeatured(true);
+    setFormDemoUrl('');
+    setFormGithubUrl('');
+    setFormClientName('');
+    setFormDeliverables('');
+    setFormDesignTools([]);
+    setDesignToolInput('');
+    setFormBehanceUrl('');
+    setFormDimensions('');
+    setFormFeatured(false);
     setIsProjectModalOpen(true);
   };
 
   // Open Project Modal for Edit
   const handleOpenEditProject = (proj: Project) => {
     setEditingProject(proj);
-    setFormTitle(proj.title);
-    setFormSubtitle(proj.subtitle);
-    setFormCategory(proj.category);
-    setFormYear(proj.year || '2025');
-    setFormDescription(proj.description);
-    setFormImage(proj.image);
-    setFormRole(proj.role || 'Creative Specialist');
-    setFormStatus(proj.status || 'Client Project');
-    setFormRating(proj.rating || '4.9');
-    setFormDuration(proj.duration || '7 days');
-    setFormRate(proj.rate || '$45/hr');
+    setFormTitle(proj.title || '');
+    setFormSubtitle(proj.subtitle || '');
+    setFormCategory(proj.category || 'web-building');
+    setFormYear(proj.year || '');
+    setFormDescription(proj.description || '');
+    setFormImage(proj.image || '');
+    setFormRole(proj.role || '');
+    setFormStatus(proj.status || '');
+    setFormRating(proj.rating || '');
+    setFormDuration(proj.duration || '');
+    setFormRate(proj.rate || '');
     setFormTechTags(proj.techStack || []);
     setTagInput('');
     setFormDemoUrl(proj.demoUrl || '');
     setFormGithubUrl(proj.githubUrl || '');
+    setFormClientName(proj.clientName || '');
+    setFormDeliverables(proj.deliverables || '');
+    setFormDesignTools(proj.designTools || (proj.category === 'graphic-design' ? proj.techStack : []));
+    setDesignToolInput('');
+    setFormBehanceUrl(proj.behanceUrl || '');
+    setFormDimensions(proj.dimensions || '');
     setFormFeatured(proj.featured || false);
     setIsProjectModalOpen(true);
   };
@@ -268,6 +287,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
     setFormTechTags(formTechTags.filter(t => t !== tagToRemove));
   };
 
+  // Add Design Tool Tag
+  const handleAddDesignTool = () => {
+    if (designToolInput.trim() && !formDesignTools.includes(designToolInput.trim())) {
+      setFormDesignTools([...formDesignTools, designToolInput.trim()]);
+      setDesignToolInput('');
+    }
+  };
+
+  const handleRemoveDesignTool = (toolToRemove: string) => {
+    setFormDesignTools(formDesignTools.filter(t => t !== toolToRemove));
+  };
+
   // Save Project
   const handleSaveProject = (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,25 +306,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
       showToast('Project title is required.');
       return;
     }
+    if (!formImage.trim()) {
+      showToast('Please upload or provide a project cover image.');
+      return;
+    }
 
-    const projectPayload = {
+    const projectPayload: any = {
       title: formTitle.trim(),
       subtitle: formSubtitle.trim(),
       category: formCategory,
-      year: formYear.trim() || '2025',
-      description: formDescription.trim() || 'Detailed case study and development highlights.',
-      image: formImage.trim() || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80',
+      year: formYear.trim() || new Date().getFullYear().toString(),
+      description: formDescription.trim(),
+      image: formImage.trim(),
       role: formRole.trim(),
       status: formStatus.trim(),
       rating: formRating.trim(),
       duration: formDuration.trim(),
       rate: formRate.trim(),
-      techStack: formTechTags.length > 0 ? formTechTags : ['Design', 'Development'],
-      demoUrl: formDemoUrl.trim() || undefined,
-      githubUrl: formGithubUrl.trim() || undefined,
       featured: formFeatured,
       hidden: editingProject ? editingProject.hidden : false,
     };
+
+    if (formCategory === 'graphic-design') {
+      projectPayload.clientName = formClientName.trim();
+      projectPayload.deliverables = formDeliverables.trim();
+      projectPayload.designTools = formDesignTools;
+      projectPayload.behanceUrl = formBehanceUrl.trim() || undefined;
+      projectPayload.dimensions = formDimensions.trim();
+      projectPayload.techStack = formDesignTools.length > 0 ? formDesignTools : ['Photoshop', 'Illustrator'];
+      projectPayload.demoUrl = formDemoUrl.trim() || undefined;
+      projectPayload.githubUrl = undefined;
+    } else {
+      projectPayload.techStack = formTechTags.length > 0 ? formTechTags : ['React', 'CSS'];
+      projectPayload.demoUrl = formDemoUrl.trim() || undefined;
+      projectPayload.githubUrl = formGithubUrl.trim() || undefined;
+    }
 
     if (editingProject) {
       updateProject(editingProject.id, projectPayload);
@@ -777,7 +824,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                     <div>
                       <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                         <img 
-                          src={project.image} 
+                          src={getAssetUrl(project.image)} 
                           alt={project.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -816,21 +863,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                           {project.subtitle}
                         </p>
 
-                        {/* Tech tags preview */}
+                        {/* Tags preview */}
                         <div className="flex flex-wrap gap-1 mt-3">
-                          {project.techStack.slice(0, 3).map((t, idx) => (
+                          {(project.category === 'graphic-design' && project.designTools && project.designTools.length > 0
+                            ? project.designTools
+                            : project.techStack || []
+                          ).slice(0, 3).map((t, idx) => (
                             <span
                               key={idx}
-                              className="text-[10px] px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-mono"
+                              className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                                project.category === 'graphic-design'
+                                  ? 'bg-amber-500/10 text-amber-700 dark:text-[#d6ad60]'
+                                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                              }`}
                             >
                               {t}
                             </span>
                           ))}
-                          {project.techStack.length > 3 && (
-                            <span className="text-[10px] px-1 text-neutral-400 self-center">
-                              +{project.techStack.length - 3}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -1408,7 +1457,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                 {formImage ? (
                   <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 group">
                     <img 
-                      src={formImage} 
+                      src={getAssetUrl(formImage)} 
                       alt="Project Preview" 
                       className="w-full h-full object-cover"
                     />
@@ -1433,7 +1482,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                       Click to choose image from Gallery
                     </p>
                     <p className="text-[10px] text-neutral-400 mt-1">
-                      PNG, JPG, WebP up to 5MB (16:9 recommended)
+                      PNG, JPG, WebP up to 10MB (16:9 recommended)
                     </p>
                   </div>
                 )}
@@ -1443,13 +1492,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-outfit font-medium text-neutral-500 mb-1">
-                    My Role
+                    {formCategory === 'graphic-design' ? 'Design Role' : 'Dev Role'}
                   </label>
                   <input
                     type="text"
                     value={formRole}
                     onChange={(e) => setFormRole(e.target.value)}
-                    placeholder="e.g. Frontend Dev"
+                    placeholder={formCategory === 'graphic-design' ? 'e.g. Lead Brand Designer' : 'e.g. Frontend Engineer'}
                     className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
                   />
                 </div>
@@ -1462,7 +1511,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                     type="text"
                     value={formStatus}
                     onChange={(e) => setFormStatus(e.target.value)}
-                    placeholder="e.g. Delivered (Live)"
+                    placeholder="e.g. Completed / Delivered"
                     className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
                   />
                 </div>
@@ -1475,85 +1524,257 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                     type="text"
                     value={formRating}
                     onChange={(e) => setFormRating(e.target.value)}
-                    placeholder="5.0"
+                    placeholder="e.g. 5.0"
                     className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-outfit font-medium text-neutral-500 mb-1">
-                    Project Duration
+                    Duration / Timeline
                   </label>
                   <input
                     type="text"
                     value={formDuration}
                     onChange={(e) => setFormDuration(e.target.value)}
-                    placeholder="10 days"
+                    placeholder="e.g. 5 Days"
                     className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-outfit font-medium text-neutral-500 mb-1">
-                    Rate / Cost
+                    Rate / Budget
                   </label>
                   <input
                     type="text"
                     value={formRate}
                     onChange={(e) => setFormRate(e.target.value)}
-                    placeholder="$45/hr"
+                    placeholder="e.g. Fixed Price / Hourly"
                     className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
                   />
                 </div>
               </div>
 
-              {/* 5. Tech Stack Tags */}
-              <div>
-                <label className="block text-xs font-outfit font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 mb-1.5">
-                  Tech Stack & Tools
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                    placeholder="Type technology (e.g. Next.js) and click Add"
-                    className="flex-1 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="px-3.5 py-2 rounded-lg bg-neutral-200 dark:bg-neutral-800 text-xs font-outfit font-bold hover:bg-neutral-300 dark:hover:bg-neutral-700"
-                  >
-                    Add
-                  </button>
-                </div>
+              {/* 5. DYNAMIC CATEGORY-SPECIFIC FORM FIELDS */}
+              {formCategory === 'graphic-design' ? (
+                /* ================= GRAPHIC DESIGN FIELDS ================= */
+                <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.03] space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-amber-500/10 text-[#d6ad60]">
+                    <Palette className="w-4 h-4" />
+                    <span className="text-xs font-outfit font-bold uppercase tracking-wider">
+                      Graphic Design Specific Details
+                    </span>
+                  </div>
 
-                {/* Display Current Tags */}
-                <div className="flex flex-wrap gap-1.5">
-                  {formTechTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs font-outfit text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
-                    >
-                      <span>{tag}</span>
+                  {/* Client Name & Dimensions */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-outfit font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
+                        Client / Brand Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formClientName}
+                        onChange={(e) => setFormClientName(e.target.value)}
+                        placeholder="e.g. Apex Luxury Co. or Personal Commission"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700/80 text-sm focus:outline-none focus:border-[#d6ad60]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-outfit font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
+                        Dimensions & Print Specs
+                      </label>
+                      <input
+                        type="text"
+                        value={formDimensions}
+                        onChange={(e) => setFormDimensions(e.target.value)}
+                        placeholder="e.g. 300 DPI CMYK, A4 Vector, 4K UHD"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700/80 text-sm focus:outline-none focus:border-[#d6ad60]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Deliverables / Scope */}
+                  <div>
+                    <label className="block text-xs font-outfit font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
+                      Deliverables & Scope
+                    </label>
+                    <input
+                      type="text"
+                      value={formDeliverables}
+                      onChange={(e) => setFormDeliverables(e.target.value)}
+                      placeholder="e.g. Logo Identity, Typography, Packaging, Social Media Kit"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700/80 text-sm focus:outline-none focus:border-[#d6ad60]"
+                    />
+                  </div>
+
+                  {/* Design Software & Tools */}
+                  <div>
+                    <label className="block text-xs font-outfit font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
+                      Design Software & Tools
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={designToolInput}
+                        onChange={(e) => setDesignToolInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddDesignTool();
+                          }
+                        }}
+                        placeholder="e.g. Adobe Illustrator, Photoshop, Figma, InDesign..."
+                        className="flex-1 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
+                      />
                       <button
                         type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-red-500 ml-0.5"
+                        onClick={handleAddDesignTool}
+                        className="px-3.5 py-2 rounded-lg bg-[#d6ad60] text-black text-xs font-outfit font-bold hover:bg-[#c5a059]"
                       >
-                        <X className="w-3 h-3" />
+                        Add Tool
                       </button>
-                    </span>
-                  ))}
+                    </div>
+
+                    {/* Display Current Design Tools */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {formDesignTools.map((tool) => (
+                        <span
+                          key={tool}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-800 dark:text-[#d6ad60] border border-amber-500/20 text-xs font-outfit"
+                        >
+                          <span>{tool}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDesignTool(tool)}
+                            className="hover:text-red-500 ml-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Behance URL & Optional Interactive Showcase URL */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                      <label className="block text-xs font-outfit font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
+                        Behance Showcase URL (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        value={formBehanceUrl}
+                        onChange={(e) => setFormBehanceUrl(e.target.value)}
+                        placeholder="https://behance.net/gallery/..."
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-outfit font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
+                        Live Preview / Interactive Link (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        value={formDemoUrl}
+                        onChange={(e) => setFormDemoUrl(e.target.value)}
+                        placeholder="https://example.com"
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* ================= WEBSITE BUILDING FIELDS ================= */
+                <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100">
+                    <Globe className="w-4 h-4 text-[#d6ad60]" />
+                    <span className="text-xs font-outfit font-bold uppercase tracking-wider">
+                      Website Development Details
+                    </span>
+                  </div>
+
+                  {/* Tech Stack Tags */}
+                  <div>
+                    <label className="block text-xs font-outfit font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 mb-1.5">
+                      Tech Stack & Libraries
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
+                        placeholder="e.g. Next.js, React, Tailwind CSS, TypeScript..."
+                        className="flex-1 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddTag}
+                        className="px-3.5 py-2 rounded-lg bg-neutral-200 dark:bg-neutral-800 text-xs font-outfit font-bold hover:bg-neutral-300 dark:hover:bg-neutral-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {/* Display Current Tags */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {formTechTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-xs font-outfit text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="hover:text-red-500 ml-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Web URLs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-outfit font-medium text-neutral-500 mb-1">
+                        Live Demo URL (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        value={formDemoUrl}
+                        onChange={(e) => setFormDemoUrl(e.target.value)}
+                        placeholder="https://example.com"
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-outfit font-medium text-neutral-500 mb-1">
+                        GitHub / Source Code URL (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        value={formGithubUrl}
+                        onChange={(e) => setFormGithubUrl(e.target.value)}
+                        placeholder="https://github.com/..."
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* 6. Detailed Description (Shown on public details page) */}
               <div>
@@ -1569,33 +1790,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
                 />
               </div>
 
-              {/* 7. External URLs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-outfit font-medium text-neutral-500 mb-1">
-                    Live Demo URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={formDemoUrl}
-                    onChange={(e) => setFormDemoUrl(e.target.value)}
-                    placeholder="https://example.com"
-                    className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-outfit font-medium text-neutral-500 mb-1">
-                    GitHub / Source Code URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={formGithubUrl}
-                    onChange={(e) => setFormGithubUrl(e.target.value)}
-                    placeholder="https://github.com/..."
-                    className="w-full px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-xs focus:outline-none focus:border-[#d6ad60]"
-                  />
-                </div>
+              {/* 7. Featured Toggle */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="form-featured"
+                  checked={formFeatured}
+                  onChange={(e) => setFormFeatured(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#d6ad60] focus:ring-[#d6ad60]"
+                />
+                <label htmlFor="form-featured" className="text-xs font-outfit text-neutral-700 dark:text-neutral-300 cursor-pointer">
+                  Feature this project prominently on portfolio
+                </label>
               </div>
 
               {/* Modal Buttons */}
