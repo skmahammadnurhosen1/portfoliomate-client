@@ -48,5 +48,6 @@ npm run dev
    - **Build command:** `npm run build`
    - **Publish directory:** `client/dist`
 3. In **Environment variables**, set:
-   - `VITE_API_URL`: `https://your-backend.onrender.com/api` (Replace with your actual Render URL)
+   - `VITE_API_URL`: `https://portfoliomate-server-2.onrender.com/api`
+   - `VITE_BACKEND_URL`: `https://portfoliomate-server-2.onrender.com`
 4. Deploy! Netlify will build the client and communicate with your Render backend.

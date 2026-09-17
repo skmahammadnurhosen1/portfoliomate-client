@@ -18,8 +18,11 @@ export interface AdminUser {
   lastLoginAt?: string;
 }
 
-// If VITE_API_URL is configured (e.g. on Netlify: https://your-backend.onrender.com/api), use it. Otherwise use relative '/api'
-const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+// Live production backend URL on Render
+const DEFAULT_BACKEND_URL = 'https://portfoliomate-server-2.onrender.com';
+
+// If VITE_API_URL is configured (e.g. on Netlify: https://portfoliomate-server-2.onrender.com/api), use it. Otherwise use default
+const API_BASE = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : `${DEFAULT_BACKEND_URL}/api`)).replace(/\/$/, '');
 
 // Helper to resolve static media (e.g. uploaded images or PDFs) across different domains
 export function getAssetUrl(path: string | undefined): string {
@@ -27,7 +30,7 @@ export function getAssetUrl(path: string | undefined): string {
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
     return path;
   }
-  const backendBase = (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || '').replace(/\/$/, '');
+  const backendBase = (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || DEFAULT_BACKEND_URL).replace(/\/$/, '');
   return `${backendBase}${path.startsWith('/') ? path : '/' + path}`;
 }
 
