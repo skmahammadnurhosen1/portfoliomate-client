@@ -51,7 +51,10 @@ export const DownloadCVModal: React.FC<DownloadCVModalProps> = ({ isOpen, onClos
 
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleDownloadCV = async () => {
+  const handleDownloadCV = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
     // If the admin has uploaded a custom PDF, download it reliably via blob fetch
     if (cvData.customPdfUrl) {
       setIsDownloading(true);
@@ -60,14 +63,9 @@ export const DownloadCVModal: React.FC<DownloadCVModalProps> = ({ isOpen, onClos
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
       } catch (err) {
-        console.warn('[CV Modal] Direct blob download fallback to asset link:', err);
-        const link = document.createElement('a');
-        link.href = getAssetUrl(cvData.customPdfUrl);
-        link.download = cvData.customPdfFileName || `${displayName.replace(/\s+/g, '_')}_CV.pdf`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        console.warn('[CV Modal] Direct blob download failed, opening direct URL in new tab:', err);
+        const safeUrl = getAssetUrl(cvData.customPdfUrl);
+        window.open(safeUrl, '_blank', 'noopener,noreferrer');
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
       } finally {
@@ -121,12 +119,17 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
     const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
+    link.style.display = 'none';
     link.href = url;
     link.download = `${displayName.replace(/\s+/g, '_')}_Resume.txt`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+      URL.revokeObjectURL(url);
+    }, 2000);
     setDownloadSuccess(true);
     setTimeout(() => setDownloadSuccess(false), 3000);
   };
@@ -163,6 +166,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
               title="Print CV or Save as PDF"
@@ -172,6 +176,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
             </button>
 
             <button
+              type="button"
               onClick={onClose}
               className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
               aria-label="Close modal"
@@ -422,21 +427,36 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
             <button
+              type="button"
               onClick={onClose}
               className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             >
               Close
             </button>
 
+            {cvData.customPdfUrl && (
+              <a
+                href={getAssetUrl(cvData.customPdfUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2.5 rounded-xl text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Open PDF directly in a new tab"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-[#d6ad60]" />
+                <span>Open in Tab</span>
+              </a>
+            )}
+
             <button
-              onClick={handleDownloadCV}
+              type="button"
+              onClick={(e) => handleDownloadCV(e)}
               disabled={isDownloading}
               className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-[#d6ad60] text-neutral-950 hover:bg-[#c5a059] transition-all cursor-pointer shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isDownloading ? (
                 <>
                   <Download className="w-4 h-4 animate-bounce" />
-                  <span>Downloading PDF...</span>
+                  <span>Preparing Download...</span>
                 </>
               ) : downloadSuccess ? (
                 <>

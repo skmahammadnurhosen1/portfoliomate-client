@@ -17,7 +17,7 @@ interface ProjectsProps {
 }
 
 export const Projects: React.FC<ProjectsProps> = ({ onSelectProject }) => {
-  const { projects } = usePortfolio();
+  const { projects, isLoading } = usePortfolio();
   const [activeCategory, setActiveCategory] = useState<'all' | 'graphic-design' | 'web-building'>('all');
   const [bookmarkedIds, setBookmarkedIds] = useState<Record<string, boolean>>({});
   
@@ -109,8 +109,30 @@ export const Projects: React.FC<ProjectsProps> = ({ onSelectProject }) => {
           </div>
         </div>
 
-        {/* Minimalist Projects Grid: responsive, no overlap on mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
+        {/* Minimalist Projects Grid / Skeleton State: Zero demo projects rendered */}
+        {isLoading && displayedProjects.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 animate-pulse">
+            {[1, 2].map((idx) => (
+              <div
+                key={idx}
+                className="flex flex-col rounded-2xl sm:rounded-3xl bg-neutral-100/70 dark:bg-[#110f0d]/60 border border-neutral-200/60 dark:border-neutral-800/60 p-5 sm:p-7"
+              >
+                <div className="aspect-[16/10] w-full rounded-xl bg-neutral-200/70 dark:bg-neutral-800/60 mb-5" />
+                <div className="h-4 w-1/4 rounded bg-neutral-200/70 dark:bg-neutral-800/60 mb-3" />
+                <div className="h-6 w-3/4 rounded bg-neutral-200/70 dark:bg-neutral-800/60 mb-3" />
+                <div className="h-3 w-full rounded bg-neutral-200/50 dark:bg-neutral-800/40 mb-2" />
+                <div className="h-3 w-2/3 rounded bg-neutral-200/50 dark:bg-neutral-800/40" />
+              </div>
+            ))}
+          </div>
+        ) : displayedProjects.length === 0 ? (
+          <div className="w-full py-20 text-center flex flex-col items-center justify-center">
+            <p className="font-outfit text-sm text-neutral-500 dark:text-neutral-400">
+              No projects published in this category yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
           {displayedProjects.map((project) => {
             const isBookmarked = !!bookmarkedIds[project.id];
             const isGraphic = project.category === 'graphic-design';
@@ -251,6 +273,7 @@ export const Projects: React.FC<ProjectsProps> = ({ onSelectProject }) => {
             );
           })}
         </div>
+        )}
 
         {/* 4. Centered "View More" (ভিউ মোর) Button Section */}
         {/* Rule: No "Showing X of Y projects (Loads 6 per step)" text. Only the clean button. */}

@@ -9,7 +9,6 @@ import {
   CVEducationItem 
 } from '../types';
 import { 
-  PROJECTS as DEFAULT_PROJECTS, 
   PERSONAL_INFO as DEFAULT_PERSONAL_INFO,
   DEFAULT_CV_DATA
 } from '../data/portfolioData';
@@ -83,7 +82,7 @@ const INITIAL_SOCIAL_LINKS: SocialLinkItem[] = [
 ];
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [personalInfo, setPersonalInfo] = useState<PersonalInfoType>({
     ...DEFAULT_PERSONAL_INFO,
     socialLinks: INITIAL_SOCIAL_LINKS,
@@ -120,7 +119,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }));
       }
     } catch (e) {
-      console.warn('[PortfolioContext] Failed to load data from API. Using defaults:', e);
+      console.warn('[PortfolioContext] Failed to load data from API:', e);
     } finally {
       setIsLoading(false);
     }
@@ -133,12 +132,15 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Load all projects for admin (including hidden ones)
   const loadAdminProjects = async () => {
     try {
+      setIsLoading(true);
       const allProjects = await projectsApi.getAdminAll();
       if (allProjects) {
         setProjects(allProjects);
       }
     } catch (e) {
       console.error('[PortfolioContext] Error loading admin projects:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -410,12 +412,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const resetToDefaults = async () => {
-    setProjects(DEFAULT_PROJECTS);
-    setPersonalInfo({
-      ...DEFAULT_PERSONAL_INFO,
-      socialLinks: INITIAL_SOCIAL_LINKS,
-    });
-    setCvData(DEFAULT_CV_DATA);
+    await refreshData();
   };
 
   return (

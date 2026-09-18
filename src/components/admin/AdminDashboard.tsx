@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -72,6 +72,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
     personalInfo,
     cvData,
     unreadCount,
+    isLoading,
+    loadAdminProjects,
     addProject,
     updateProject,
     deleteProject,
@@ -82,6 +84,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPortfoli
     deleteSocialLink,
     resetToDefaults,
   } = usePortfolio();
+
+  useEffect(() => {
+    loadAdminProjects();
+  }, []);
 
   const [activeTab, setActiveTab] = useState<TabType>('projects');
   const [toastMessage, setToastMessage] = useState<string | null>(null);

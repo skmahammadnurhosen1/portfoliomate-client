@@ -209,19 +209,51 @@ export const cvApi = {
 
   downloadPdf: async (fallbackFileName = 'Nur_Hosen_CV.pdf') => {
     const downloadUrl = `${API_BASE}/cv/download`;
-    const response = await fetch(downloadUrl);
+    const response = await fetch(downloadUrl, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/pdf',
+      },
+    });
+
     if (!response.ok) {
-      throw new Error('CV PDF is not available for download.');
+      const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
+      throw new Error(errorData.message || `Failed to download CV (Status ${response.status})`);
     }
+
     const blob = await response.blob();
+    if (blob.size === 0) {
+      throw new Error('Downloaded CV file is empty');
+    }
+
+    // Extract filename from Content-Disposition header if available
+    let fileName = fallbackFileName;
+    const disposition = response.headers.get('content-disposition');
+    if (disposition) {
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      if (utf8Match && utf8Match[1]) {
+        fileName = decodeURIComponent(utf8Match[1]);
+      } else {
+        const asciiMatch = disposition.match(/filename="?([^";]+)"?/i);
+        if (asciiMatch && asciiMatch[1]) {
+          fileName = decodeURIComponent(asciiMatch[1]);
+        }
+      }
+    }
+
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
+    link.style.display = 'none';
     link.href = blobUrl;
-    link.download = fallbackFileName;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+      window.URL.revokeObjectURL(blobUrl);
+    }, 2000);
   },
 };
 

@@ -127,6 +127,7 @@ export const AboutMe: React.FC<AboutMeProps> = ({ onNavigate, onOpenCVModal }) =
             <div className="pt-2 flex flex-wrap items-center gap-3">
               {onOpenCVModal && (
                 <button
+                  type="button"
                   id="about-download-cv-btn"
                   onClick={onOpenCVModal}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-950 font-outfit font-bold text-xs sm:text-sm hover:bg-[#d6ad60] dark:hover:bg-[#d6ad60] dark:hover:text-black transition-all shadow-xs cursor-pointer"
@@ -138,6 +139,7 @@ export const AboutMe: React.FC<AboutMeProps> = ({ onNavigate, onOpenCVModal }) =
 
               {onNavigate && (
                 <button
+                  type="button"
                   id="about-contact-btn"
                   onClick={() => onNavigate('contact')}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#12100e] border border-neutral-300 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200 font-outfit font-semibold text-xs sm:text-sm hover:border-[#d6ad60] hover:text-[#d6ad60] dark:hover:text-[#d6ad60] transition-all shadow-xs cursor-pointer"

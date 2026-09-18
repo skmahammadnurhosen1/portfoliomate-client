@@ -178,6 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Download CV Button */}
             <button
+              type="button"
               id="download-cv-header-btn"
               onClick={onOpenCVModal}
               className={`relative group flex items-center gap-2 px-5 py-2 rounded-full text-xs md:text-sm font-medium tracking-wide border transition-all duration-300 shadow-sm focus:outline-none cursor-pointer ${
@@ -302,6 +303,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Drawer Bottom: Download CV & Status */}
         <div className="pt-6 border-t border-neutral-200 dark:border-neutral-900 space-y-4">
           <button
+            type="button"
             onClick={handleCVClick}
             className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-full text-sm font-semibold tracking-wide text-neutral-900 dark:text-neutral-100 border border-[#c5a059] bg-[#c5a059]/15 hover:bg-[#c5a059]/25 active:bg-[#c5a059]/35 shadow-sm transition-all cursor-pointer touch-manipulation select-none active:scale-[0.98]"
           >
