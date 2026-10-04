@@ -19,9 +19,7 @@ export const AboutMe: React.FC<AboutMeProps> = ({ onNavigate, onOpenCVModal }) =
   const { personalInfo, cvData } = usePortfolio();
   const displayName = personalInfo.firstName || personalInfo.name || 'Noor';
   const bioIntro = personalInfo.longBio || personalInfo.bio || 'Specializing in distinctive graphic design, brand identity systems, and modern, responsive website building.';
-  const primaryEdu = cvData.education?.[0]?.institution 
-    ? `${cvData.education[0].institution} (${cvData.education[0].degree})`
-    : 'Bengal Institute of Technology (ETCE, 1st Year)';
+  const primaryEdu = 'Bengal Institutional Technology';
 
   return (
     <section

@@ -101,28 +101,25 @@ export const CVManager: React.FC<CVManagerProps> = ({ onShowToast, onPreviewCV }
       ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
       : `${Math.round(file.size / 1024)} KB`;
 
+    onShowToast(`Uploading "${file.name}" (${formattedSize})...`);
     uploadCVPdfFile(file)
       .then(() => {
-        onShowToast(`PDF uploaded successfully to server: "${file.name}"!`);
+        onShowToast(`PDF uploaded successfully: "${file.name}"!`);
       })
-      .catch((err) => {
-        console.warn('[CVManager] Server upload failed, using local reader fallback:', err);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const dataUrl = event.target?.result as string;
-          if (dataUrl) {
-            uploadCVPdf(dataUrl, file.name, formattedSize);
-            onShowToast(`PDF saved: "${file.name}"!`);
-          }
-        };
-        reader.onerror = () => {
-          onShowToast('Failed to read the PDF file. Please try again.');
-        };
-        reader.readAsDataURL(file);
+      .catch((err: any) => {
+        console.error('[CVManager] PDF upload failed:', err);
+        const status = err?.status;
+        const msg =
+          status === 401 || status === 403
+            ? 'Session expired. Please log in again and retry.'
+            : status === 413
+              ? 'PDF is too large for the server.'
+              : err?.message || 'Upload failed. Server may be waking up — please retry in a moment.';
+        onShowToast(`Upload failed: ${msg}`);
+      })
+      .finally(() => {
+        if (pdfInputRef.current) pdfInputRef.current.value = '';
       });
-
-    // Reset input
-    if (pdfInputRef.current) pdfInputRef.current.value = '';
   };
 
   // Test Download uploaded PDF

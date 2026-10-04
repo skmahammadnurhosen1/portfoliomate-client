@@ -27,6 +27,8 @@ export const DownloadCVModal: React.FC<DownloadCVModalProps> = ({ isOpen, onClos
   const { cvData, personalInfo } = usePortfolio();
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -49,11 +51,10 @@ export const DownloadCVModal: React.FC<DownloadCVModalProps> = ({ isOpen, onClos
     }
   };
 
-  const [isDownloading, setIsDownloading] = useState(false);
-
   const handleDownloadCV = async (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
+    setDownloadError(null);
 
     // If the admin has uploaded a custom PDF, download it reliably via blob fetch
     if (cvData.customPdfUrl) {
@@ -62,12 +63,15 @@ export const DownloadCVModal: React.FC<DownloadCVModalProps> = ({ isOpen, onClos
         await cvApi.downloadPdf(cvData.customPdfFileName || `${displayName.replace(/\s+/g, '_')}_CV.pdf`);
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
-      } catch (err) {
-        console.warn('[CV Modal] Direct blob download failed, opening direct URL in new tab:', err);
+      } catch (err: any) {
+        console.warn('[CV Modal] Blob download failed, trying direct link:', err);
         const safeUrl = getAssetUrl(cvData.customPdfUrl);
-        window.open(safeUrl, '_blank', 'noopener,noreferrer');
-        setDownloadSuccess(true);
-        setTimeout(() => setDownloadSuccess(false), 3000);
+        const win = window.open(safeUrl, '_blank');
+        if (win) {
+          win.opener = null;
+        } else {
+          setDownloadError(err?.message || 'Download failed. Please try "Open in Tab".');
+        }
       } finally {
         setIsDownloading(false);
       }
@@ -93,25 +97,25 @@ ${cvData.summary || personalInfo.bio || ''}
 --------------------------------------------------------------------------------
 CORE COMPETENCIES & SKILLS
 --------------------------------------------------------------------------------
-${cvData.skills.map(s => `• ${s}`).join('\n')}
+${(cvData.skills || []).map(s => `• ${s}`).join('\n')}
 
 --------------------------------------------------------------------------------
 KEY HIGHLIGHTS & ACHIEVEMENTS
 --------------------------------------------------------------------------------
-${cvData.highlights.map(h => `• ${h.text}`).join('\n')}
+${(cvData.highlights || []).map(h => `• ${h.text}`).join('\n')}
 
-${cvData.experiences.length > 0 ? `
+${(cvData.experiences || []).length > 0 ? `
 --------------------------------------------------------------------------------
 WORK EXPERIENCE
 --------------------------------------------------------------------------------
-${cvData.experiences.map(e => `[${e.period}] ${e.role} — ${e.company}\n${e.description ? `  ${e.description}\n` : ''}`).join('\n')}
+${(cvData.experiences || []).map(e => `[${e.period}] ${e.role} — ${e.company}\n${e.description ? `  ${e.description}\n` : ''}`).join('\n')}
 ` : ''}
 
-${cvData.education.length > 0 ? `
+${(cvData.education || []).length > 0 ? `
 --------------------------------------------------------------------------------
 EDUCATION & QUALIFICATIONS
 --------------------------------------------------------------------------------
-${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year})`).join('\n')}
+${(cvData.education || []).map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year})`).join('\n')}
 ` : ''}
 ================================================================================
 `.trim();
@@ -283,7 +287,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
               )}
 
               {/* Core Competencies & Skills */}
-              {cvData.showSkills && cvData.skills.length > 0 && (
+              {cvData.showSkills && (cvData.skills || []).length > 0 && (
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#d6ad60]" />
@@ -292,7 +296,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
                     </h2>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {cvData.skills.map((skill) => (
+                    {(cvData.skills || []).map((skill) => (
                       <span
                         key={skill}
                         className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-white dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 shadow-2xs hover:border-[#d6ad60] transition-colors"
@@ -305,7 +309,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
               )}
 
               {/* Education & Qualifications */}
-              {cvData.showEducation && cvData.education.length > 0 && (
+              {cvData.showEducation && (cvData.education || []).length > 0 && (
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-1.5">
                     <GraduationCap className="w-3.5 h-3.5 text-[#d6ad60]" />
@@ -314,7 +318,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
                     </h2>
                   </div>
                   <div className="space-y-2 text-xs">
-                    {cvData.education.map((edu) => (
+                    {(cvData.education || []).map((edu) => (
                       <div 
                         key={edu.id} 
                         className="p-3 rounded-xl bg-white dark:bg-neutral-900/40 border border-neutral-200/70 dark:border-neutral-800/70 space-y-0.5"
@@ -338,7 +342,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
             <div className="lg:col-span-7 space-y-6">
               
               {/* Key Highlights & Achievements */}
-              {cvData.showHighlights && cvData.highlights.length > 0 && (
+              {cvData.showHighlights && (cvData.highlights || []).length > 0 && (
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#d6ad60]" />
@@ -347,7 +351,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
                     </h2>
                   </div>
                   <div className="space-y-2 text-xs">
-                    {cvData.highlights.map((hl) => (
+                    {(cvData.highlights || []).map((hl) => (
                       <div 
                         key={hl.id} 
                         className="flex items-start gap-2.5 p-3 rounded-xl bg-white dark:bg-neutral-900/40 border border-neutral-200/70 dark:border-neutral-800/70 text-neutral-700 dark:text-neutral-300"
@@ -361,7 +365,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
               )}
 
               {/* Work Experience Timeline */}
-              {cvData.showExperience && cvData.experiences.length > 0 && (
+              {cvData.showExperience && (cvData.experiences || []).length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-1.5">
                     <Briefcase className="w-3.5 h-3.5 text-[#d6ad60]" />
@@ -371,7 +375,7 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
                   </div>
 
                   <div className="space-y-3.5 relative before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-[1.5px] before:bg-neutral-200 dark:before:bg-neutral-800">
-                    {cvData.experiences.map((exp) => (
+                    {(cvData.experiences || []).map((exp) => (
                       <div 
                         key={exp.id} 
                         className="relative pl-6 space-y-1 text-xs"
@@ -422,6 +426,9 @@ ${cvData.education.map(ed => `• ${ed.degree} — ${ed.institution} (${ed.year}
                 <Sparkles className="w-3.5 h-3.5 text-[#d6ad60]" />
                 <span>Verified Clean Curriculum Vitae</span>
               </div>
+            )}
+            {downloadError && (
+              <span className="text-red-600 dark:text-red-400 font-medium">{downloadError}</span>
             )}
           </div>
 
