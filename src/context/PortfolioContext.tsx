@@ -186,14 +186,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProjects(prev => [created, ...prev]);
     } catch (e) {
       console.error('[PortfolioContext] Error adding project:', e);
-      // Optimistic fallback
-      const tempProject: Project = {
-        ...projectData,
-        id: `project-${Date.now()}`,
-        featured: projectData.featured ?? false,
-        hidden: false,
-      };
-      setProjects(prev => [tempProject, ...prev]);
+      throw e;
     }
   };
 
@@ -203,7 +196,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProjects(prev => prev.map(p => (p.id === id ? saved : p)));
     } catch (e) {
       console.error('[PortfolioContext] Error updating project:', e);
-      setProjects(prev => prev.map(p => (p.id === id ? { ...p, ...updated } : p)));
+      throw e;
     }
   };
 
@@ -213,7 +206,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProjects(prev => prev.filter(p => p.id !== id));
     } catch (e) {
       console.error('[PortfolioContext] Error deleting project:', e);
-      setProjects(prev => prev.filter(p => p.id !== id));
+      throw e;
     }
   };
 
@@ -223,9 +216,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProjects(prev => prev.map(p => (p.id === id ? toggled : p)));
     } catch (e) {
       console.error('[PortfolioContext] Error toggling hide project:', e);
-      setProjects(prev =>
-        prev.map(p => (p.id === id ? { ...p, hidden: !p.hidden } : p))
-      );
+      throw e;
     }
   };
 
@@ -236,16 +227,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setPersonalInfo(prev => ({ ...prev, ...updated }));
     } catch (e) {
       console.error('[PortfolioContext] Error updating personal info:', e);
-      setPersonalInfo(prev => {
-        const next = { ...prev, ...info };
-        if (info.firstName !== undefined || info.lastName !== undefined) {
-          const f = info.firstName !== undefined ? info.firstName : prev.firstName;
-          const l = info.lastName !== undefined ? info.lastName : prev.lastName;
-          next.name = l ? `${f} ${l}`.trim() : f.trim();
-          next.initials = f ? f.charAt(0).toUpperCase() : 'N';
-        }
-        return next;
-      });
+      throw e;
     }
   };
 
@@ -299,7 +281,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setCvData(prev => ({ ...prev, ...updated }));
     } catch (e) {
       console.error('[PortfolioContext] Error updating CV data:', e);
-      setCvData(prev => ({ ...prev, ...data }));
+      throw e;
     }
   };
 

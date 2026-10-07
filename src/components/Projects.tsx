@@ -69,7 +69,7 @@ export const Projects: React.FC<ProjectsProps> = ({ onSelectProject }) => {
             <div className="flex items-center gap-3 mb-2.5">
               <span className="w-8 h-[2px] bg-[#d6ad60]" />
               <span className="text-xs font-semibold tracking-[0.28em] text-[#d6ad60] uppercase">
-                03 / PORTFOLIO SHOWCASE
+                05 / PORTFOLIO SHOWCASE
               </span>
             </div>
             <h2 className="font-serif-luxury text-2xl sm:text-4xl md:text-5xl text-neutral-900 dark:text-[#f4ece1] font-normal leading-tight">

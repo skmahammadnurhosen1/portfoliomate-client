@@ -13,7 +13,7 @@ export const Skills: React.FC = () => {
           <div className="flex items-center gap-2.5 mb-3">
             <span className="w-6 h-[2px] bg-[#d6ad60]" />
             <span className="text-[12px] font-semibold tracking-[0.25em] text-[#d6ad60] uppercase">
-              03 / MY SKILLS & TOOLS
+              04 / MY SKILLS & TOOLS
             </span>
           </div>
           <h2 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-neutral-900 dark:text-[#f4ece1] font-normal leading-tight">
